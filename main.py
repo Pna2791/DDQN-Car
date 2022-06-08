@@ -53,6 +53,7 @@ def run():
                     return
 
             action = ddqn_agent.choose_action(observation)
+            # print('action:', action)
             observation_, reward, done = game.step(action)
             observation_ = np.array(observation_)
 

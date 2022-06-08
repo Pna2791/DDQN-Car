@@ -18,6 +18,7 @@ class ReplayBuffer(object):
         self.terminal_memory = np.zeros(self.mem_size, dtype=np.float32)
 
     def store_transition(self, state, action, reward, state_, done):
+        # print('action:', action)
         index = self.mem_cntr % self.mem_size
         self.state_memory[index] = state
         self.new_state_memory[index] = state_
@@ -77,7 +78,7 @@ class DDQNAgent(object):
         else:
             actions = self.brain_eval.predict(state)
             action = np.argmax(actions)
-            print(action)
+            # print(action)
 
         return action
 
@@ -90,18 +91,19 @@ class DDQNAgent(object):
 
             q_next = self.brain_target.predict(new_state)
             q_eval = self.brain_eval.predict(new_state)
-            q_pred = self.brain_eval.predict(state)
+            q_target = self.brain_eval.predict(state)
 
             max_actions = np.argmax(q_eval, axis=1)
 
-            q_target = q_pred
+            print('max_actions:', max_actions)
+            print('shape', max_actions.shape)
 
             batch_index = np.arange(self.batch_size, dtype=np.int32)
 
             q_target[batch_index, action_indices] = reward + self.gamma * q_next[
                 batch_index, max_actions.astype(int)] * done
 
-            _ = self.brain_eval.train(state, q_target)
+            self.brain_eval.train(state, q_target)
 
             self.epsilon = self.epsilon * self.epsilon_dec if self.epsilon > self.epsilon_min else self.epsilon_min
 
@@ -128,7 +130,8 @@ class Brain:
 
     def createModel(self):
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Dense(256, activation=tf.nn.relu))  # prev 256
+        model.add(tf.keras.layers.Dense(64, activation=tf.nn.relu))  # prev 256
+        model.add(tf.keras.layers.Dense(32, activation=tf.nn.relu))  # prev 256
         model.add(tf.keras.layers.Dense(self.NbrActions, activation=tf.nn.softmax))
         model.compile(loss="mse", optimizer="adam")
 
